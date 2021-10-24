@@ -77,6 +77,12 @@ results.model{1}
 datafiles{1} = reshape(data,[2 2 2 200]); % reshape data to volume
 stimfiles{1} = stim;
 results = prfVistasoft(stimfiles, datafiles, stimradius,'tr',tr);
+
+% Size of data has two 4 dimensions (commonly this is the shape of data
+% extracted from the volume (X x Y x Z x nTRs)
+
+
+
 %%
 % These are the results from fitting pRFs with vistasoft on 8 voxels. See
 % that the shape of data corresponds to a 3D matrix. Here, each voxels has

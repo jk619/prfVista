@@ -29,11 +29,11 @@ whos
 
 % Data in each cell of datafiles has to be a matrix where last dimensions
 % is time 
-% 1) for surfcae (Vertex x nTRs)
+% 1) for surfcae (nVertex x nTRs)
 % 2) for volume (X x Y x Z x nTRs)
 
 % Stimuli aperture in stimfiles has to be a 3D matrix where last dimension
-% is time. 
+% is time.
 
 fprintf('There are %d runs in total.\n',length(datafiles));
 fprintf('The dimensions of the data for the first run are %s.\n',mat2str(size(datafiles{1})));

@@ -1,14 +1,14 @@
 function results = prfVistasoft(stimfiles, datafiles, stimradius, varargin)
 % Create a temporary, hidden vistasoft session and solve pRF model
 %
-% Inputs 
+% Inputs
 %   stimfiles:  path to one or more files with stimulus description, char or
 %                   cell of chars
 %   datafiles:  path to one or more files with BOLD time series, char or
 %                   cell of chars
-%   stimradius: radius in degrees, scalar 
+%   stimradius: radius in degrees, scalar
 %   varargin:   input pairs for <model>, <wsearch>, <detrend>, <keepallPoints>, <numberStimulusGridPoints>
-%                   These are optional inputs to rmMain. 
+%                   These are optional inputs to rmMain.
 %   TODO: Update this function to simply pass all paired arguments to rmMain. No need to parse them here.
 %
 % Outputs
@@ -16,7 +16,7 @@ function results = prfVistasoft(stimfiles, datafiles, stimradius, varargin)
 %
 % Examples:
 %   results = prfVistasoft(fullfile(prfRootPath, 'local', 'vista2test_Stim.nii.gz'), fullfile(prfRootPath, 'local', 'vista2test_Data.nii.gz'), 10);
-%   
+%
 %   See README.md for several more detailed examples
 
 
@@ -64,6 +64,7 @@ end
 
 
 %% Set up files and directories
+codedir = pwd;
 homedir = fullfile(tempdir, 'vistaPRF');
 mkdir(homedir)
 cd(homedir);
@@ -72,43 +73,51 @@ if exist(fullfile(homedir,'Raw'),'dir');warning('RAW DIR EXISTS');end
 mkdir(fullfile(homedir, 'Raw'));
 mkdir(fullfile(homedir, 'Stimuli'));
 
-%% move the data into the new directories
-for ii = 1:numscans
-    fprintf('[pmVistasoft] Stim path %d: %s\n',ii, stimfiles{ii})
-    fprintf('[pmVistasoft] Data path %d: %s\n',ii, datafiles{ii})
-    copyfile(datafiles{ii}, fullfile(homedir, 'Raw'));
-    copyfile(stimfiles{ii}, fullfile(homedir, 'Stimuli'));
-end
-fprintf('\n[pmVistasoft] This is stimradius: %i\n',stimradius)
-
 %% convert stim files to .mat format that vistasoft can read
 stimfileMat = cell(1, numscans);
 for ii = 1:numscans
-    [~, ~, e] = fileparts(stimfiles{ii});
-    switch e
-        case {'.nii' '.gz'}
-            ni = niftiRead(stimfiles{ii});
-            
-            images = squeeze(ni.data);
-            pixdim = niftiGet(ni, 'pixdim');
-            tr     = pixdim(end);
-        case '.mat'
-            s = load(stimfiles{ii});
-            if ~isfield(s, 'stim'), error('Cannot find stim field in .mat stim file'); end
-            images = s.stim;
-    end            
     
-    sprintf('\n\n USING TR:%2.2f \n\n',tr)
+    fprintf('[pmVistasoft] Stim path %d: %s\n',ii, stimfiles{ii})
+    images = stimfiles{ii};
     stimulus.seq = 1:size(images,3);
     stimulus.seqtiming = (stimulus.seq-1) * tr;
-    
     stimfileMat{ii} = fullfile('.', 'Stimuli', sprintf('images_and_params_scan%d', ii));
     save(stimfileMat{ii}, 'images', 'stimulus');
+    
 end
+
+
+%% convert functional files to nifti-2
+
+datafileNifti = cell(1, numscans);
+
+for ii = 1:numscans
+    fprintf('[pmVistasoft] DAtafile number %i\n',ii)
+    
+    sz = size(datafiles{ii});
+    
+    if length(sz)>2 
+        datafiles{ii} = reshape(datafiles{ii},[sz(1)*sz(2)*sz(3) sz(4)]);
+    end
+    
+    tmp_data = zeros(size(datafiles{ii},1),1,1,size(datafiles{ii},2));
+    tmp_data(:,1,1,:) = datafiles{ii};
+    niftiwrite(tmp_data, fullfile(homedir, 'Raw',sprintf('%i',ii)));
+    % adjust nifti header for vista compatibility;
+    tmp_nifti = niftiRead(fullfile(homedir, 'Raw',sprintf('%i.nii',ii)));    
+    tmp_nifti.xyz_units = 'mm';
+    tmp_nifti.time_units = 'sec';
+    tmp_nifti.pixdim(end) = tr;
+    datafileNifti{ii} = fullfile(homedir, 'Raw',sprintf('%i.nii',ii));
+    niftiWrite(tmp_nifti,datafileNifti{ii});
+end
+
+fprintf('\n[pmVistasoft] This is stimradius: %i\n',stimradius)
 
 %% create a pseudo inplane underlay, required by vistasoft, by averaging the
 %   time series for each voxel
-fmri        = niftiRead(datafiles{1});
+
+fmri        = niftiRead(datafileNifti{1});
 ippath      = fullfile('.', 'Raw', 'inplane.nii.gz');
 ip          = fmri; 
 ip.data     = mean(fmri.data, length(size(fmri.data)));
@@ -116,18 +125,15 @@ ip.dim      = size(ip.data);
 ip.ndim     = numel(ip.dim);
 niftiWrite(ip, ippath);
 
-% A = niftiRead(ippath)
-
 
 %% Set up the vistasoft session
 params = mrInitDefaultParams;
-
 params.sessionDir   = homedir;
 params.vAnatomy     = [];
 params.inplane      = ippath;
 
 for ii = 1:numscans
-    [~, f, e] = fileparts(datafiles{ii});
+    [~, f, e] = fileparts(datafileNifti{ii});
     params.functionals{ii}  = fullfile('.','Raw', sprintf('%s%s', f,e));
 end
 % Run it:
@@ -198,18 +204,42 @@ saveSession();
 vw = initHiddenInplane();
 
 vw = rmMain(vw, [], wSearch, ...
-            'model', {model}, ...
-            'matFileName', 'tmpResults', ...
-            'keepAllPoints', keepAllPoints, ...
-            'numberStimulusGridPoints', numGridPoints, ...
-            'decimate', decimatefactor, ...
-            'calcPC', calcPC);
+    'model', {model}, ...
+    'matFileName', 'tmpResults', ...
+    'keepAllPoints', keepAllPoints, ...
+    'numberStimulusGridPoints', numGridPoints, ...
+    'decimate', decimatefactor, ...
+    'calcPC', calcPC);
 
-% Load the results        
+% Load the results
 d = dir(fullfile(dataDir(vw), sprintf('%s*', 'tmpResults')));
 [~,newestIndex] = max([d.datenum]);
 results = load(fullfile(dataDir(vw), d(newestIndex).name));
 
+if length(sz) > 2
+
+    fields = fieldnames(results.model{1});
+    
+    for f = 1 : length(fields)
+        
+        if contains('x0',fields{f}) || contains('y0',fields{f})|| contains('rawrss',fields{f}) || contains('exponent',fields{f})
+            
+            results.model{1}.(fields{f}) = reshape(results.model{1}.(fields{f}),[sz(1) sz(2) sz(3)]);
+            
+        elseif contains('sigma',fields{f})
+            
+             results.model{1}.sigma.major = reshape(results.model{1}.sigma.major,[sz(1) sz(2) sz(3)]);
+             results.model{1}.sigma.minor = reshape(results.model{1}.sigma.minor,[sz(1) sz(2) sz(3)]);
+             results.model{1}.sigma.theta = reshape(results.model{1}.sigma.theta,[sz(1) sz(2) sz(3)]);
+             
+        elseif  contains('beta',fields{f})
+            
+            results.model{1}.beta = reshape(results.model{1}.beta,[sz(1) sz(2) sz(3) size(results.model{1}.beta,4)]);
+
+        end
+    end
+end
+    
 %% Delete all global variables created by mrVista
 mrvCleanWorkspace
 
@@ -217,7 +247,7 @@ mrvCleanWorkspace
 cd(homedir)
 cd('../')
 rmdir(homedir, 's')
-
+cd(codedir);
 %% TODO: Convert results to mgz or some other standardized format?
 
 

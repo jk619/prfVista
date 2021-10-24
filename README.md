@@ -1,5 +1,5 @@
 # prfVista
-A small respository to call pRF functions in vistasoft without the need to set up vistasoft-specific data structures and session files. The assumption is that the fMRI time series are in MATLAB format, and the stimulus file is also in MATLAB format.
+A small respository to call pRF functions in vistasoft without the need to set up vistasoft-specific data structures and session files. The assumption is that the fMRI time series and stimulus apertures are in MATLAB format.
 
 
 Examples:

@@ -68,7 +68,8 @@ end
 results = prfVistasoft(stimfiles, datafiles, stimradius,'tr',tr);
 
 %%
-% These are the results from fitting pRFs with vistasoft on 8 vertices
+% These are the results from fitting pRFs with vistasoft on 8 vertices. See
+% that the size of output corresponds to data fitted for 8 vertices.
 
 results.model{1}
 %% We will now run pRFVista on the volumetric data
@@ -77,7 +78,9 @@ datafiles{1} = reshape(data,[2 2 2 200]); % reshape data to volume
 stimfiles{1} = stim;
 results = prfVistasoft(stimfiles, datafiles, stimradius,'tr',tr);
 %%
-% These are the results from fitting pRFs with vistasoft on 8 voxels
+% These are the results from fitting pRFs with vistasoft on 8 voxels. See
+% that the shape of data corresponds to a 3D matrix. Here, each voxels has
+% a fitted values.
 
 results.model{1}
 

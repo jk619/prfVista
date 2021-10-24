@@ -28,7 +28,10 @@ whos
 % stimfiles as next cells i.e datafiles{2} = data2 stimfiles{2}= stim2;
 
 % Data in each cell of datafiles has to be a matrix where last dimensions
-% is time  for surfcae (Vertex x nTRs) or volume (X x Y x Z x nTRs). 
+% is time 
+% 1) for surfcae (Vertex x nTRs)
+% 2) for volume (X x Y x Z x nTRs)
+
 % Stimuli aperture in stimfiles has to be a 3D matrix where last dimension
 % is time. 
 
@@ -36,6 +39,8 @@ fprintf('There are %d runs in total.\n',length(datafiles));
 fprintf('The dimensions of the data for the first run are %s.\n',mat2str(size(datafiles{1})));
 fprintf('The stimulus radius is %.0f seconds.\n',stimradius);
 fprintf('The sampling rate (TR) is %.3f seconds.\n',tr);
+fprintf('Stimulus size is %i X %i X %i.\n',size(stimfiles{1}));
+
 
 %% Example data from one vertex
 figure(1); clf

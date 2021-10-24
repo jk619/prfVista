@@ -8,8 +8,8 @@ close all
 load(fullfile(prfRootPath, 'local', 'data.mat'));
 load(fullfile(prfRootPath, 'local', 'stim.mat'));
 
-datafiles{1} = data; 
-stimfiles{1} = stim; 
+datafiles{1} = data;
+stimfiles{1} = stim;
 stimradius = 10; % in degrees
 tr = 1.5; % in seconds
 
@@ -25,12 +25,12 @@ whos
 % should be in [0,1].  The number of time points can differ across runs
 
 % If you're using more runs, each of them should be stored in datafiles and
-% stimfiles as next cells i.e 
-% datafiles{2} = data2 
+% stimfiles as next cells i.e
+% datafiles{2} = data2
 % stimfiles{2}= stim2;
 
 % Data in each cell of datafiles has to be a matrix where last dimension
-% is time 
+% is time
 % 1) for surfcae (nVertex x nTRs)
 % 2) for volume (X x Y x Z x nTRs)
 
@@ -57,10 +57,10 @@ show_frames = [20 25 35 50];
 
 for s = 1 : length(show_frames)
     
-subplot(2,2,s)
-imagesc(stimfiles{1}(:,:,show_frames(s))); colormap gray; axis off
-title(sprintf('Frame %i/%i from stimulus sequence',show_frames(s),size(stimfiles{1},3)))
-
+    subplot(2,2,s)
+    imagesc(stimfiles{1}(:,:,show_frames(s))); colormap gray; axis off
+    title(sprintf('Frame %i/%i from stimulus sequence',show_frames(s),size(stimfiles{1},3)))
+    
 end
 
 %% We will now run pRFVista on the surface data
@@ -68,9 +68,7 @@ end
 results = prfVistasoft(stimfiles, datafiles, stimradius,'tr',tr);
 
 %%
-% These are the results from fitting pRFs with vistasoft on 8 vertices. See
-% that the size of output corresponds to data fitted for 8 vertices.
-
+% These are the results from fitting pRFs with vistasoft on 8 vertices.
 results.model{1}
 %% We will now run pRFVista on the volumetric data
 
@@ -78,15 +76,13 @@ datafiles{1} = reshape(data,[2 2 2 200]); % reshape data to volume
 stimfiles{1} = stim;
 results = prfVistasoft(stimfiles, datafiles, stimradius,'tr',tr);
 
-% Size of data has two 4 dimensions (commonly this is the shape of data
+% Size of data has four dimensions (commonly this is the shape of data
 % extracted from the volume (X x Y x Z x nTRs)
 
 
 
 %%
-% These are the results from fitting pRFs with vistasoft on 8 voxels. See
-% that the shape of data corresponds to a 3D matrix. Here, each voxels has
-% a fitted values.
+% These are the results from fitting pRFs with vistasoft on 8 voxels.
 
 results.model{1}
 

@@ -25,9 +25,11 @@ whos
 % should be in [0,1].  The number of time points can differ across runs
 
 % If you're using more runs, each of them should be stored in datafiles and
-% stimfiles as next cells i.e datafiles{2} = data2 stimfiles{2}= stim2;
+% stimfiles as next cells i.e 
+% datafiles{2} = data2 
+% stimfiles{2}= stim2;
 
-% Data in each cell of datafiles has to be a matrix where last dimensions
+% Data in each cell of datafiles has to be a matrix where last dimension
 % is time 
 % 1) for surfcae (nVertex x nTRs)
 % 2) for volume (X x Y x Z x nTRs)
